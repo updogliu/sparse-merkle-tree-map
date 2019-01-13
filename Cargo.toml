@@ -8,6 +8,7 @@ A uint-to-uint map backed by Sparse Merkle Tree (SMT), which supports generating
 Merkle Proofs of key-values.
 """
 keywords = ["Sparse Merkle Tree", "Merkle Tree", "Merkle Proof"]
+repository = "https://github.com/updogliu/sparse-merkle-tree-map"
 readme = "README.md"
 license = "MIT"
 
