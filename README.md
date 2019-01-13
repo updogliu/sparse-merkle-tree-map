@@ -9,7 +9,7 @@ SMT has a form of full binary tree. Therefore an SMT of, for example, uint256 al
 leaf node. Each leaf node corresponds to a key-value pair of the SMT-Map: the value is stored on
 the node, and the key is the uint representation of the path from the root to the leaf.
 
-See the documentation and references for more details.
+See the [documentation](https://docs.rs/smt_map/0.0.1/smt_map) and references for more details.
 
 ## References:
 [1] [Revocation Transparency](
