@@ -59,8 +59,8 @@ fn test_tree_node_index() {
 }
 
 #[test]
-fn test_sparse_merkle_tree_256_kv() {
-    let mut smt = SparseMerkleTree256::new();
+fn test_smt_map_256_kv() {
+    let mut smt = SmtMap256::new();
     assert_eq!(*smt.get(&U256::zero()), U256::zero());
 
     let key = hex_u256("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
@@ -75,14 +75,14 @@ fn test_sparse_merkle_tree_256_kv() {
 }
 
 #[test]
-fn test_sparse_merkle_tree_256_merkle_proof() {
+fn test_smt_map_256_merkle_proof() {
     assert_eq!((*DEFAULT_HASHES)[0], [0; 32]);
 
     let expected_default_root_hash =
         hex_hash("a7ff9e28ffd3def443d324547688c2c4eb98edf7da757d6bfa22bff55b9ce24a");
     assert_eq!((*DEFAULT_HASHES)[256], expected_default_root_hash);
 
-    let mut smt = SparseMerkleTree256::new();
+    let mut smt = SmtMap256::new();
 
     // Verify proof of key 0x03 when the values of all keys are default.
     let key3 = U256::from(0x03);
@@ -209,8 +209,8 @@ fn test_sparse_merkle_tree_256_merkle_proof() {
 }
 
 #[test]
-fn test_sparse_merkle_tree_256_merkle_proof_negative_cases() {
-    let mut smt = SparseMerkleTree256::new();
+fn test_smt_map_256_merkle_proof_negative_cases() {
+    let mut smt = SmtMap256::new();
     let (key, value) = (U256::from(0x03), U256::from(0x01) << 128);
     smt.set(key, value);
     smt.set(U256::zero(), U256::from(0xAA));

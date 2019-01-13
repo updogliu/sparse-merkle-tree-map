@@ -1,7 +1,7 @@
 [package]
-name = "sparse_merkle_tree"
-version = "0.1.0"
-authors = ["updogliu <updogliu@gmail.com>"]
+name = "smt_map"
+version = "0.0.1"
+authors = ["Zihan Liu <updogliu@gmail.com>"]
 edition = "2018"
 
 [dependencies]

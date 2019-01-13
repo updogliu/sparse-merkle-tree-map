@@ -41,6 +41,7 @@ impl TreeNodeIndex {
         }
     }
 
+    /// Index of the root.
     fn root() -> Self {
         Self {
             bit_path: U256::zero(),
@@ -48,11 +49,12 @@ impl TreeNodeIndex {
         }
     }
 
+    /// Whether this is the root.
     fn is_root(&self) -> bool {
         self.depth == 0
     }
 
-    /// Whether this node is a left subnode.
+    /// Whether this is a left subnode.
     fn is_left(&self) -> bool {
         self.depth > 0 && !self.bit_path.bit(256 - self.depth)
     }
@@ -83,22 +85,25 @@ pub struct MerkleProof {
     pub hashes: std::vec::Vec<Hash256>,
 }
 
-/// SparseMerkleTree256 is Sparse Merkle Tree data structure storing a u256-to-u256 key-value map.
-/// Initially every key has a default value of zero.
+/// SmtMap256 is Sparse Merkle Tree Map from uint256 keys to uint256 values, and supports
+/// generating 256-bit merkle proofs. Initially every of the 2**256 possible keys has a default
+/// value of zero.
 ///
-/// The bit-path to a leaf node is from the most-significant-bit to the least-significant-bit of
-/// the key. The hash of a leaf node is just the value (in big-endian) of the corresponding key.
-/// The hash of an inner node is calculated by hashing (using keccak-256) the concatenation of the
-/// hashes of its two sub-nodes.
-pub struct SparseMerkleTree256 {
+/// Each leaf corresponds to a key-value pair. The key is the bit-path from the root to the leaf
+/// (starting from the most-significant-bit to the least-significant-bit; 0 is left, 1 is right).
+/// The value is stored as the hash of the leaf node (in big-endian).
+///
+/// The hash of an non-leaf node is calculated by hashing (using keccak-256) the concatenation of
+/// the hashes of its two sub-nodes.
+pub struct SmtMap256 {
     kvs: HashMap<U256, U256>,
 
     // Hash values of both leaf and inner nodes.
     hashes: HashMap<TreeNodeIndex, Hash256>,
 }
 
-impl SparseMerkleTree256 {
-    /// Returns a new Sparse Merkle Tree with all keys having the default value (zero).
+impl SmtMap256 {
+    /// Returns a new SMT-Map of uint256 where all keys have the default value (zero).
     pub fn new() -> Self {
         Self {
             kvs: HashMap::new(),
@@ -155,7 +160,7 @@ impl SparseMerkleTree256 {
         )
     }
 
-    /// Returns the merkle root of the this Sparse Merkle Tree.
+    /// Returns the merkle root of this Sparse Merkle Tree.
     pub fn merkle_root(&self) -> &Hash256 {
         return self.get_hash(&TreeNodeIndex::root());
     }
@@ -180,8 +185,8 @@ impl SparseMerkleTree256 {
     }
 }
 
-/// Verifies the value of a key in a Sparse Merkle Tree (given by its merkle root). Returns
-/// whether the verification passed.
+/// Verifies the value of a key in a SMT-Map (specified by its merkle root). Returns whether the
+/// verification has passed.
 pub fn verify_merkle_proof(
     merkle_root: &Hash256,
     key: &U256,
