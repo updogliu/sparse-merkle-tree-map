@@ -10,14 +10,14 @@ the node, and the key is the uint representation of the path from the root to th
 See the documentation and references for more details.
 
 ## References:
-[1] [Revocation Transparency]
-    (https://www.links.org/files/RevocationTransparency.pdf)
-[2] [Data availability proof-friendly state tree transitions]
-    (https://ethresear.ch/t/data-availability-proof-friendly-state-tree-transitions/1453)
+[1] [Revocation Transparency](
+    https://www.links.org/files/RevocationTransparency.pdf)
+    
+[2] [Data availability proof-friendly state tree transitions](
+    https://ethresear.ch/t/data-availability-proof-friendly-state-tree-transitions/1453)
 
 # Library Status
 
-Pre-alpha.
+Pre-alpha. Basically tested and documented. The APIs are subject to change. 
 
-Basically tested and documented. The APIs are subject to change. Pull requests and feature requests
-are welcome.
+Pull requests and feature requests are welcome.
