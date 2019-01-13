@@ -162,7 +162,7 @@ impl SmtMap256 {
 
     /// Returns the merkle root of this Sparse Merkle Tree.
     pub fn merkle_root(&self) -> &Hash256 {
-        return self.get_hash(&TreeNodeIndex::root());
+        self.get_hash(&TreeNodeIndex::root())
     }
 
     /// Verifies the value of a key using the merkle proof. Returns whether the verification passed.
@@ -231,6 +231,5 @@ fn merge_hashes(left: &Hash256, right: &Hash256) -> Hash256 {
     hasher.update(&*right);
     let mut result: Hash256 = [0; 32];
     hasher.finalize(&mut result);
-
-    return result;
+    result
 }
