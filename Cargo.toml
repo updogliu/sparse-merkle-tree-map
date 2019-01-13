@@ -3,6 +3,13 @@ name = "smt_map"
 version = "0.0.1"
 authors = ["Zihan Liu <updogliu@gmail.com>"]
 edition = "2018"
+description = """
+A uint-to-uint map backed by Sparse Merkle Tree (SMT), which supports generating
+Merkle Proofs of key-values.
+"""
+keywords = ["Sparse Merkle Tree", "Merkle Tree", "Merkle Proof"]
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 tiny-keccak = "1.4.2"
