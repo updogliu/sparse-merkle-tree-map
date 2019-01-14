@@ -95,6 +95,7 @@ pub struct MerkleProof {
 ///
 /// The hash of an non-leaf node is calculated by hashing (using keccak-256) the concatenation of
 /// the hashes of its two sub-nodes.
+#[derive(Default)]
 pub struct SmtMap256 {
     kvs: HashMap<U256, U256>,
 
@@ -131,7 +132,7 @@ impl SmtMap256 {
             self.update_hash(&index, &hash);
         }
 
-        self.kvs.insert(key, value).unwrap_or(U256::zero())
+        self.kvs.insert(key, value).unwrap_or(*U256_ZERO)
     }
 
     /// Returns a reference to the value of a key.
