@@ -91,10 +91,10 @@ pub struct MerkleProof {
 ///
 /// Each leaf corresponds to a key-value pair. The key is the bit-path from the root to the leaf
 /// (starting from the most-significant-bit to the least-significant-bit; 0 is left, 1 is right).
-/// The value is stored as the hash of the leaf node (in big-endian).
 ///
-/// The hash of an non-leaf node is calculated by hashing (using keccak-256) the concatenation of
-/// the hashes of its two sub-nodes.
+/// The hash of the leaf node is just the value (in big-endian) of the corresponding key. The hash
+/// of an non-leaf node is calculated by hashing (using keccak-256) the concatenation of the hashes
+/// of its two sub-nodes.
 #[derive(Default)]
 pub struct SmtMap256 {
     kvs: HashMap<U256, U256>,
