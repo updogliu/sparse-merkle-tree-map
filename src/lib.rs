@@ -172,9 +172,10 @@ impl SmtMap256 {
         self.get_hash(&TreeNodeIndex::root())
     }
 
-    /// Verifies the value of a key using the merkle proof. Returns whether the verification passed.
-    pub fn verify_merkle_proof(&self, key: &U256, value: &U256, proof: &MerkleProof) -> bool {
-        verify_merkle_proof(self.merkle_root(), key, value, proof)
+    /// Check the merkle proof of a key-value pair in this SMT-Map. Returns whether the proof is
+    /// valid.
+    pub fn check_merkle_proof(&self, key: &U256, value: &U256, proof: &MerkleProof) -> bool {
+        check_merkle_proof(self.merkle_root(), key, value, proof)
     }
 
     fn get_hash(&self, index: &TreeNodeIndex) -> &Hash256 {
@@ -192,9 +193,9 @@ impl SmtMap256 {
     }
 }
 
-/// Verifies the value of a key in a SMT-Map (specified by its merkle root). Returns whether the
-/// verification has passed.
-pub fn verify_merkle_proof(
+/// Check the merkle proof of a key-value pair in a SMT-Map (specified by its merkle root). Returns
+/// whether the proof is valid.
+pub fn check_merkle_proof(
     merkle_root: &Hash256,
     key: &U256,
     value: &U256,

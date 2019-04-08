@@ -95,8 +95,8 @@ fn test_smt_map_256_merkle_proof() {
             hashes: vec![],
         }
     );
-    assert!(smt.verify_merkle_proof(&key3, value, &proof));
-    assert!(verify_merkle_proof(smt.merkle_root(), &key3, value, &proof));
+    assert!(smt.check_merkle_proof(&key3, value, &proof));
+    assert!(check_merkle_proof(smt.merkle_root(), &key3, value, &proof));
 
     // Verify the merkle proof of key 0x03 when key 0x00 has a non-default value.
     smt.set(U256::zero(), U256::from(0xAA));
@@ -115,8 +115,8 @@ fn test_smt_map_256_merkle_proof() {
         *smt.merkle_root(),
         hex_hash("c2850844249b78ca4b416d5d8430c48a89b76e808648d4630275feadab00d0cd")
     );
-    assert!(smt.verify_merkle_proof(&key3, value, &proof));
-    assert!(verify_merkle_proof(smt.merkle_root(), &key3, value, &proof));
+    assert!(smt.check_merkle_proof(&key3, value, &proof));
+    assert!(check_merkle_proof(smt.merkle_root(), &key3, value, &proof));
 
     // Verify the merkle proof of key 0x03 again after setting a value at the max key (0xFF..FF).
     smt.set(U256::max_value(), U256::from(0x1234));
@@ -136,8 +136,8 @@ fn test_smt_map_256_merkle_proof() {
         *smt.merkle_root(),
         hex_hash("514f973cd76a4e5430119524ae291a3227f1e81f69f5bf2c61a36d2a6c3e239e")
     );
-    assert!(smt.verify_merkle_proof(&key3, value, &proof));
-    assert!(verify_merkle_proof(smt.merkle_root(), &key3, value, &proof));
+    assert!(smt.check_merkle_proof(&key3, value, &proof));
+    assert!(check_merkle_proof(smt.merkle_root(), &key3, value, &proof));
 
     // Verify the merkle proof of key 0x03 again after setting a value at key 0x03 itself.
     let value3 = U256::from(0x01) << 128;
@@ -217,7 +217,7 @@ fn test_smt_map_256_merkle_proof_negative_cases() {
     smt.set(U256::max_value(), U256::from(0x1234));
 
     // The correct merkle proof:
-    assert!(smt.verify_merkle_proof(
+    assert!(smt.check_merkle_proof(
         &key,
         &value,
         &MerkleProof {
@@ -230,7 +230,7 @@ fn test_smt_map_256_merkle_proof_negative_cases() {
     ));
 
     // Negative cases of merkle proof verification:
-    assert!(!smt.verify_merkle_proof(
+    assert!(!smt.check_merkle_proof(
         &key,
         &value,
         &MerkleProof {
@@ -242,7 +242,7 @@ fn test_smt_map_256_merkle_proof_negative_cases() {
             ],
         }
     ));
-    assert!(!smt.verify_merkle_proof(
+    assert!(!smt.check_merkle_proof(
         &key,
         &value,
         &MerkleProof {
@@ -253,7 +253,7 @@ fn test_smt_map_256_merkle_proof_negative_cases() {
             ],
         }
     ));
-    assert!(!smt.verify_merkle_proof(
+    assert!(!smt.check_merkle_proof(
         &key,
         &value,
         &MerkleProof {
@@ -265,7 +265,7 @@ fn test_smt_map_256_merkle_proof_negative_cases() {
             ],
         }
     ));
-    assert!(!smt.verify_merkle_proof(
+    assert!(!smt.check_merkle_proof(
         &key,
         &value,
         &MerkleProof {
