@@ -16,3 +16,7 @@ license = "MIT"
 tiny-keccak = "1.4.2"
 uint = "0.5.0"
 lazy_static = "1.2.0"
+
+[features]
+std = []
+test = ["std"]

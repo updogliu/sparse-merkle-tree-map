@@ -1,4 +1,11 @@
-use std::collections::HashMap;
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#![feature(alloc)]
+
+extern crate alloc;
+
+use alloc::collections::btree_map::BTreeMap;
+use alloc::vec::Vec;
 use uint::U256;
 
 #[cfg(test)]
@@ -20,7 +27,7 @@ lazy_static::lazy_static! {
 }
 
 /// Index of a node in a Sparse Merkle Tree.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 struct TreeNodeIndex {
     // The path is defined as from the most significant bit to the `depth`-th significant bit. An 0
     // bit means left, and 1 bit means right. More less significant bits are irrelevant and set to
@@ -81,7 +88,7 @@ impl TreeNodeIndex {
 #[derive(PartialEq, Eq, Debug)]
 pub struct MerkleProof {
     pub bitmap: U256,
-    pub hashes: std::vec::Vec<Hash256>,
+    pub hashes: Vec<Hash256>,
 }
 
 /// SmtMap256 is Sparse Merkle Tree Map from uint256 keys to uint256 values, and supports
@@ -96,18 +103,18 @@ pub struct MerkleProof {
 /// of its two sub-nodes.
 #[derive(Default)]
 pub struct SmtMap256 {
-    kvs: HashMap<U256, U256>,
+    kvs: BTreeMap<U256, U256>,
 
     // Hash values of both leaf and inner nodes.
-    hashes: HashMap<TreeNodeIndex, Hash256>,
+    hashes: BTreeMap<TreeNodeIndex, Hash256>,
 }
 
 impl SmtMap256 {
     /// Returns a new SMT-Map of uint256 where all keys have the default value (zero).
     pub fn new() -> Self {
         Self {
-            kvs: HashMap::new(),
-            hashes: HashMap::new(),
+            kvs: BTreeMap::new(),
+            hashes: BTreeMap::new(),
         }
     }
 
@@ -142,7 +149,7 @@ impl SmtMap256 {
     /// Returns a reference to the value of the key with merkle proof.
     pub fn get_with_proof(&self, key: &U256) -> (&U256, MerkleProof) {
         let mut bitmap = U256::zero();
-        let mut sibling_hashes = std::vec::Vec::new();
+        let mut sibling_hashes = Vec::new();
         let mut index = TreeNodeIndex::leaf(*key);
         for i in 0..256 {
             if let Some(sibling_hash) = self.hashes.get(&index.sibling().unwrap()) {
