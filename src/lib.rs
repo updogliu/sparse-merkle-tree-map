@@ -9,7 +9,6 @@ pub type Hash256 = [u8; 32];
 
 lazy_static::lazy_static! {
     static ref U256_ZERO: U256 = U256::zero();
-    static ref HASH256_ZERO: Hash256 = [0; 32];
     static ref DEFAULT_HASHES: [Hash256; 257] = {
         // The element at index `i` is the hash of a subtree with `2^i` default nodes.
         let mut hashes: [Hash256; 257] = [[0; 32]; 257];
