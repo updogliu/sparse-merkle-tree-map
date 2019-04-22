@@ -1,4 +1,5 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![cfg_attr(not(test), no_std)]
+#![feature(alloc)]
 
 #[cfg(not(test))]
 extern crate alloc;
@@ -66,7 +67,7 @@ impl TreeNodeIndex {
 
     /// Whether this is a left subnode.
     fn is_left(&self) -> bool {
-        self.depth > 0 && !bit_op::get_le_bit(&self.bit_path, self.depth - 1)
+        self.depth > 0 && !bit_op::get_bit(&self.bit_path, self.depth - 1)
     }
 
     /// Returns the index of the sibling of this node. Returns `None` if `self` is the root.
@@ -76,14 +77,14 @@ impl TreeNodeIndex {
         }
 
         let mut result = self.clone();
-        bit_op::flip_le_bit(&mut result.bit_path, result.depth - 1);
+        bit_op::flip_bit(&mut result.bit_path, result.depth - 1);
         Some(result)
     }
 
     /// Change `self` to the index of its parent node. Panics if `self` is the root.
     fn move_up(&mut self) {
         assert!(self.depth > 0, "Cannot move up from the root");
-        bit_op::clear_le_bit(&mut self.bit_path, self.depth - 1);
+        bit_op::clear_bit(&mut self.bit_path, self.depth - 1);
         self.depth -= 1;
     }
 }
@@ -107,7 +108,7 @@ pub struct MerkleProof {
 /// The hash of the leaf node is just the value of the corresponding key. The hash of an non-leaf
 /// node is calculated by hashing (using keccak-256) the concatenation of the hashes of its two
 /// sub-nodes.
-#[derive(Default)]
+#[derive(Clone)]
 pub struct SmtMap256 {
     kvs: BTreeMap<Key, Value>,
 
@@ -159,7 +160,7 @@ impl SmtMap256 {
         let mut index = TreeNodeIndex::leaf(*key);
         for i in 0..256 {
             if let Some(sibling_hash) = self.hashes.get(&index.sibling().unwrap()) {
-                bit_op::set_le_bit(&mut bitmap, i);
+                bit_op::set_bit(&mut bitmap, i);
                 sibling_hashes.push(*sibling_hash);
             }
             index.move_up();
@@ -210,7 +211,7 @@ pub fn check_merkle_proof(
     let mut hash = *value;
     let mut iter = proof.hashes.iter();
     for i in 0..256 {
-        let sibling_hash = if !bit_op::get_le_bit(&proof.bitmap, i) {
+        let sibling_hash = if !bit_op::get_bit(&proof.bitmap, i) {
             &(*DEFAULT_HASHES)[i]
         } else {
             if let Some(h) = iter.next() {
@@ -221,7 +222,7 @@ pub fn check_merkle_proof(
         };
 
         let depth = 256 - i;
-        hash = if bit_op::get_le_bit(key, depth - 1) {
+        hash = if bit_op::get_bit(key, depth - 1) {
             // sibling is at left
             merge_hashes(sibling_hash, &hash)
         } else {
