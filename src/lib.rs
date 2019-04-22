@@ -4,14 +4,16 @@
 extern crate alloc;
 
 #[cfg(test)]
-#[macro_use] extern crate alloc;
+#[macro_use]
+extern crate alloc;
 
 use alloc::collections::btree_map::BTreeMap;
 use alloc::vec::Vec;
 
+mod bit_op;
+
 #[cfg(test)]
 mod tests;
-mod bit_op;
 
 pub type Key = [u8; 32];
 pub type Value = [u8; 32];
