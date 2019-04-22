@@ -310,8 +310,9 @@ fn r256(hex: &str) -> [u8; 32] {
 }
 
 
-fn b256(s: &str) -> Hash256 {
-    <[u8; 32]>::from_hex(s).unwrap()
+// `hex` must be a 64-byte long hex string.
+fn b256(hex: &str) -> Hash256 {
+    <[u8; 32]>::from_hex(hex).unwrap()
 }
 
 fn max256() -> [u8; 32] {
