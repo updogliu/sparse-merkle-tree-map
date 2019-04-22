@@ -1,21 +1,23 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#![feature(alloc)]
-
+#[cfg(not(test))]
 extern crate alloc;
+
+#[cfg(test)]
+#[macro_use] extern crate alloc;
 
 use alloc::collections::btree_map::BTreeMap;
 use alloc::vec::Vec;
-use uint::U256;
 
 #[cfg(test)]
 mod tests;
-mod u256_utils;
+mod bit_op;
 
+pub type Key = [u8; 32];
+pub type Value = [u8; 32];
 pub type Hash256 = [u8; 32];
 
 lazy_static::lazy_static! {
-    static ref U256_ZERO: U256 = U256::zero();
     static ref DEFAULT_HASHES: [Hash256; 257] = {
         // The element at index `i` is the hash of a subtree with `2^i` default nodes.
         let mut hashes: [Hash256; 257] = [[0; 32]; 257];
@@ -29,18 +31,18 @@ lazy_static::lazy_static! {
 /// Index of a node in a Sparse Merkle Tree.
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]
 struct TreeNodeIndex {
-    // The path is defined as from the most significant bit to the `depth`-th significant bit. An 0
-    // bit means left, and 1 bit means right. More less significant bits are irrelevant and set to
-    // zeros.
-    bit_path: U256,
+    // The path starts from the first bit (the least significant bit of the first byte), and ends at
+    // the `depth`-th bit. Bit 0 means left, and bit 1 means right. Bits beyond the `depth`-th bit
+    // are irrelevant, and are always zeros.
+    bit_path: [u8; 32],
 
     // The root has depth of 0, and the leaves have depth of 256.
     depth: usize,
 }
 
 impl TreeNodeIndex {
-    /// Get a new TreeNodeIndex to the leaf corresponding to `key`.
-    fn leaf(key: U256) -> Self {
+    /// Get a new TreeNodeIndex of the leaf corresponding to the given key.
+    fn leaf(key: Key) -> Self {
         Self {
             bit_path: key,
             depth: 256,
@@ -50,7 +52,7 @@ impl TreeNodeIndex {
     /// Index of the root.
     fn root() -> Self {
         Self {
-            bit_path: U256::zero(),
+            bit_path: [0; 32],
             depth: 0,
         }
     }
@@ -62,7 +64,7 @@ impl TreeNodeIndex {
 
     /// Whether this is a left subnode.
     fn is_left(&self) -> bool {
-        self.depth > 0 && !self.bit_path.bit(256 - self.depth)
+        self.depth > 0 && !bit_op::get_le_bit(&self.bit_path, self.depth - 1)
     }
 
     /// Returns the index of the sibling of this node. Returns `None` if `self` is the root.
@@ -72,14 +74,14 @@ impl TreeNodeIndex {
         }
 
         let mut result = self.clone();
-        u256_utils::flip_bit(&mut result.bit_path, 256 - result.depth);
+        bit_op::flip_le_bit(&mut result.bit_path, result.depth - 1);
         Some(result)
     }
 
     /// Change `self` to the index of its parent node. Panics if `self` is the root.
     fn move_up(&mut self) {
-        assert!(self.depth > 0, "Cannot move up from the root of the tree!");
-        u256_utils::clear_bit(&mut self.bit_path, 256 - self.depth);
+        assert!(self.depth > 0, "Cannot move up from the root");
+        bit_op::clear_le_bit(&mut self.bit_path, self.depth - 1);
         self.depth -= 1;
     }
 }
@@ -87,30 +89,32 @@ impl TreeNodeIndex {
 /// Merkle proof of a certain triple (SMT-merkle-root, key, value).
 #[derive(PartialEq, Eq, Debug)]
 pub struct MerkleProof {
-    pub bitmap: U256,
+    /// Whether the siblings along the path to the root are non-default hashes.
+    pub bitmap: [u8; 32],
+
     pub hashes: Vec<Hash256>,
 }
 
-/// SmtMap256 is Sparse Merkle Tree Map from uint256 keys to uint256 values, and supports
+/// SmtMap256 is Sparse Merkle Tree Map from 256-bit keys to 256-bit values, and supports
 /// generating 256-bit merkle proofs. Initially every of the 2**256 possible keys has a default
 /// value of zero.
 ///
 /// Each leaf corresponds to a key-value pair. The key is the bit-path from the root to the leaf
-/// (starting from the most-significant-bit to the least-significant-bit; 0 is left, 1 is right).
+/// (see the documentation for TreeNodeIndex).
 ///
-/// The hash of the leaf node is just the value (in big-endian) of the corresponding key. The hash
-/// of an non-leaf node is calculated by hashing (using keccak-256) the concatenation of the hashes
-/// of its two sub-nodes.
+/// The hash of the leaf node is just the value of the corresponding key. The hash of an non-leaf
+/// node is calculated by hashing (using keccak-256) the concatenation of the hashes of its two
+/// sub-nodes.
 #[derive(Default)]
 pub struct SmtMap256 {
-    kvs: BTreeMap<U256, U256>,
+    kvs: BTreeMap<Key, Value>,
 
     // Hash values of both leaf and inner nodes.
     hashes: BTreeMap<TreeNodeIndex, Hash256>,
 }
 
 impl SmtMap256 {
-    /// Returns a new SMT-Map of uint256 where all keys have the default value (zero).
+    /// Returns a new SMT-Map where all keys have the default value (zero).
     pub fn new() -> Self {
         Self {
             kvs: BTreeMap::new(),
@@ -119,10 +123,10 @@ impl SmtMap256 {
     }
 
     /// Sets the value of a key. Returns the old value of the key.
-    pub fn set(&mut self, key: U256, value: U256) -> U256 {
+    pub fn set(&mut self, key: &Key, value: Value) -> Value {
         // Update the hash of the leaf.
-        let mut index = TreeNodeIndex::leaf(key);
-        let mut hash: Hash256 = u256_to_hash(&value);
+        let mut index = TreeNodeIndex::leaf(*key);
+        let mut hash: Hash256 = value;
         self.update_hash(&index, &hash);
 
         // Update the hashes of the inner nodes along the path.
@@ -138,22 +142,22 @@ impl SmtMap256 {
             self.update_hash(&index, &hash);
         }
 
-        self.kvs.insert(key, value).unwrap_or(*U256_ZERO)
+        self.kvs.insert(*key, value).unwrap_or([0; 32])
     }
 
     /// Returns a reference to the value of a key.
-    pub fn get(&self, key: &U256) -> &U256 {
-        self.kvs.get(key).unwrap_or(&U256_ZERO)
+    pub fn get(&self, key: &Key) -> &Value {
+        self.kvs.get(key).unwrap_or(&[0; 32])
     }
 
     /// Returns a reference to the value of the key with merkle proof.
-    pub fn get_with_proof(&self, key: &U256) -> (&U256, MerkleProof) {
-        let mut bitmap = U256::zero();
+    pub fn get_with_proof(&self, key: &Key) -> (&Value, MerkleProof) {
+        let mut bitmap = [0_u8; 32];
         let mut sibling_hashes = Vec::new();
         let mut index = TreeNodeIndex::leaf(*key);
         for i in 0..256 {
             if let Some(sibling_hash) = self.hashes.get(&index.sibling().unwrap()) {
-                u256_utils::set_bit(&mut bitmap, i);
+                bit_op::set_le_bit(&mut bitmap, i);
                 sibling_hashes.push(*sibling_hash);
             }
             index.move_up();
@@ -174,7 +178,7 @@ impl SmtMap256 {
 
     /// Check the merkle proof of a key-value pair in this SMT-Map. Returns whether the proof is
     /// valid.
-    pub fn check_merkle_proof(&self, key: &U256, value: &U256, proof: &MerkleProof) -> bool {
+    pub fn check_merkle_proof(&self, key: &Key, value: &Value, proof: &MerkleProof) -> bool {
         check_merkle_proof(self.merkle_root(), key, value, proof)
     }
 
@@ -197,14 +201,14 @@ impl SmtMap256 {
 /// whether the proof is valid.
 pub fn check_merkle_proof(
     merkle_root: &Hash256,
-    key: &U256,
-    value: &U256,
+    key: &Key,
+    value: &Value,
     proof: &MerkleProof,
 ) -> bool {
-    let mut hash = u256_to_hash(value);
+    let mut hash = *value;
     let mut iter = proof.hashes.iter();
     for i in 0..256 {
-        let sibling_hash = if !proof.bitmap.bit(i) {
+        let sibling_hash = if !bit_op::get_le_bit(&proof.bitmap, i) {
             &(*DEFAULT_HASHES)[i]
         } else {
             if let Some(h) = iter.next() {
@@ -214,7 +218,8 @@ pub fn check_merkle_proof(
             }
         };
 
-        hash = if key.bit(i) {
+        let depth = 256 - i;
+        hash = if bit_op::get_le_bit(key, depth - 1) {
             // sibling is at left
             merge_hashes(sibling_hash, &hash)
         } else {
@@ -224,12 +229,6 @@ pub fn check_merkle_proof(
     }
 
     iter.next() == None && hash == *merkle_root
-}
-
-fn u256_to_hash(value: &U256) -> Hash256 {
-    let mut hash = [0; 32];
-    value.to_big_endian(&mut hash);
-    hash
 }
 
 fn merge_hashes(left: &Hash256, right: &Hash256) -> Hash256 {
