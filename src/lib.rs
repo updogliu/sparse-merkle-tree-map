@@ -1,4 +1,6 @@
 #![no_std]
+
+#![allow(stable_features)]
 #![feature(alloc)]
 
 #[cfg(not(test))]
