@@ -108,7 +108,7 @@ pub struct MerkleProof {
 /// The hash of the leaf node is just the value of the corresponding key. The hash of an non-leaf
 /// node is calculated by hashing (using keccak-256) the concatenation of the hashes of its two
 /// sub-nodes.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SmtMap256 {
     kvs: BTreeMap<Key, Value>,
 
