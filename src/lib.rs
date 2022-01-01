@@ -237,11 +237,10 @@ pub fn check_merkle_proof(
 }
 
 fn merge_hashes(left: &Hash256, right: &Hash256) -> Hash256 {
-    use tiny_keccak::Keccak;
-    let mut hasher = Keccak::new_keccak256();
+    let mut hasher = tiny_keccak::Keccak::new_keccak256();
     hasher.update(&*left);
     hasher.update(&*right);
-    let mut result: Hash256 = [0; 32];
-    hasher.finalize(&mut result);
-    result
+    let mut merged: Hash256 = [0; 32];
+    hasher.finalize(&mut merged);
+    merged
 }
